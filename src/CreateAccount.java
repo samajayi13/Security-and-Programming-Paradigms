@@ -7,16 +7,15 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
-import java.util.Arrays;
-import java.util.Base64;
+import java.util.*;
 import java.util.Base64.Encoder;
 import java.util.Base64.Decoder;
-import java.util.Random;
 
 @WebServlet("/CreateAccount")
 public class CreateAccount extends HttpServlet {
@@ -74,6 +73,16 @@ public class CreateAccount extends HttpServlet {
             // execute query and close connection
             stmt.execute();
             conn.close();
+
+            //this bellow gets the paramets from the request and assigns each to a session working
+            HttpSession session  = request.getSession();
+            List<String> parameterNames = new ArrayList<String>(request.getParameterMap().keySet());
+
+            for (var name : parameterNames
+            ) {
+                session.setAttribute(name,request.getParameter(name));
+            }
+
 
             // display account.jsp page with given message if successful
             RequestDispatcher dispatcher = request.getRequestDispatcher("/account.jsp");

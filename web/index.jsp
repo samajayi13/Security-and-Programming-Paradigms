@@ -70,7 +70,7 @@
     var email = document.querySelector('#email');
     var password = document.querySelector("#password");
     var phone = document.querySelector("#phone");
-    var errorMessage = document.querySelector("#error-message")
+    var errorMessage = document.querySelector("#error-message");
 
     document.addEventListener("input",function(e){
         if(email.value.trim().length > 0 && phone.value.trim().length > 0 && password.value.trim().length > 0 && errorMessage.children.length <= 0){
