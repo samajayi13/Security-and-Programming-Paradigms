@@ -1,0 +1,51 @@
+
+html {
+    overflow: -moz-scrollbars-vertical;
+    overflow-y:visible;
+
+}
+body{
+    background:linear-gradient(to left bottom, #c1187a, #cf2971, #da3b69, #e24c62, #e85e5c),url("bg_img.jpg");
+    background-size: cover;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    background-blend-mode: overlay;
+}
+.main_div{
+    background-color: white;
+
+    padding-bottom: 20px;
+    border-radius: 15px;;
+}
+h1{
+    margin-top: 70px;
+    font-weight: 700;
+}
+.fields .form-group input{
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    margin-bottom: 30px;
+}
+.fields{
+    margin-top:80px;
+    width: 630px;
+    margin-left: 60px;
+    margin-right: 60px;
+
+}
+#submit_btn{
+    display: table;
+    margin: 0 auto;
+    padding:10px 100px 10px 100px;
+    background-image: linear-gradient(to right, #DD5E89 0%, #F7BB97 51%, #DD5E89 100%);
+    border-radius: 10px;
+}
+.userInfo{
+    color:blue;
+    font-size: 100%;
+}
+.userInfo:hover{
+    text-decoration: underline;
+    cursor: pointer;
+}
