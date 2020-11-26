@@ -1,4 +1,5 @@
-<%--
+<%@ page import="java.util.Random" %>
+<%@ page import="java.sql.*" %><%--
   Created by IntelliJ IDEA.
   User: johnmace
   Date: 21/10/2020
@@ -20,6 +21,27 @@
 
 </head>
 <body>
+<%
+    session = request.getSession();
+//    if(session.getAttribute("username") == null && session.getAttribute("drawCreated") == null) {
+//        String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
+//        String USER = "user";
+//        String PASS = "password";
+//        String DB_URL = "jdbc:mysql://localhost:33333/lottery";
+//        Class.forName(JDBC_DRIVER);
+//        Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+//        Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
+//        String number = "";
+//        for (int i = 0; i < 6; i++) {
+//            int randomNumber = (int) ((Math.random() * ((60 - 0) + 1)) + 0);
+//            number += i != 5 ? String.valueOf(randomNumber) + "," : String.valueOf(randomNumber);
+//        }
+//        String query = String.format("INSERT INTO RandomLotteryDraw(Numbers,TimeCreated) VALUES('%s',NOW())",number);
+//        stmt.execute(query);
+//        conn.close();
+//        session.setAttribute("drawCreated",true);
+//    }
+%>
 <div class="d-flex justify-content-center align-items-center container mt-3">
     <form action="CreateAccount" method="post" class="main_div">
         <h1 class="text-center">Home Page</h1>
@@ -48,9 +70,16 @@
                 <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
             </div>
 
+            <div class="form-group">
+                <label for="userRole">Select a role</label>
+                <select class="form-control" id="userRole" name="userRole">
+                    <option>Admin</option>
+                    <option>User</option>
+                </select>
+            </div>
+
             <input type="submit" id="submit_btn" value="Submit" name="submit">
             <h4 class="userInfo text-center mt-3"><a href="userLogin.jsp">Already a user? Login</a></h4>
-
         </div>
 
 

@@ -49,17 +49,18 @@ public class CreateAccount extends HttpServlet {
         String phone = request.getParameter("phone");
         String username = request.getParameter("username");
         String password = request.getParameter("password");
+        String userRole = request.getParameter("userRole");
 
         try{
             // create database connection and statement
             Class.forName(JDBC_DRIVER);
             conn = DriverManager.getConnection(DB_URL,USER,PASS);
 
-            password = processHash(password);
+            String hashedPassword = processHash(password);
 
             // Create sql query
-            String query = "INSERT INTO userAccounts (Firstname, Lastname, Email, Phone, Username, Pwd)"
-                    + " VALUES (?, ?, ?, ?, ?, ?)";
+            String query = "INSERT INTO userAccounts (Firstname, Lastname, Email, Phone, Username, Pwd,UserRole)"
+                    + " VALUES (?, ?, ?, ?, ?, ?,?)";
 
             // set values into SQL query statement
             stmt = conn.prepareStatement(query);
@@ -68,7 +69,8 @@ public class CreateAccount extends HttpServlet {
             stmt.setString(3,email);
             stmt.setString(4,phone);
             stmt.setString(5,username);
-            stmt.setString(6,password);
+            stmt.setString(6,hashedPassword);
+            stmt.setString(7,userRole);
 
             // execute query and close connection
             stmt.execute();
@@ -80,14 +82,23 @@ public class CreateAccount extends HttpServlet {
 
             for (var name : parameterNames
             ) {
-                session.setAttribute(name,request.getParameter(name));
+                if(name.equalsIgnoreCase("password"))
+                    session.setAttribute(name,hashedPassword);
+                else
+                    session.setAttribute(name,request.getParameter(name));
             }
 
 
-            // display account.jsp page with given message if successful
-            RequestDispatcher dispatcher = request.getRequestDispatcher("/account.jsp");
-            request.setAttribute("message", firstname+", you have successfully created an account");
-            dispatcher.forward(request, response);
+            List<EncryptedData> encryptedDataList = new ArrayList<>();
+            session.setAttribute("encryptedDatas",encryptedDataList);
+            if(userRole.equals("Admin")){
+                RequestDispatcher dispatcher = request.getRequestDispatcher("/Admin/admin_home.jsp");
+                dispatcher.forward(request, response);
+            }else if(userRole.equals("User")){
+                RequestDispatcher dispatcher = request.getRequestDispatcher("/account.jsp");
+                request.setAttribute("message", firstname+", you have successfully created an account");
+                dispatcher.forward(request, response);
+            }
 
         } catch(Exception se){
             se.printStackTrace();

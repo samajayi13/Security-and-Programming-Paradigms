@@ -1,4 +1,9 @@
-<%--
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.sql.DriverManager" %>
+<%@ page import="java.sql.Connection" %>
+<%@ page import="java.sql.Statement" %>
+<%@ page import="java.sql.ResultSet" %><%--
   Created by IntelliJ IDEA.
   User: johnmace
   Date: 21/10/2020
@@ -26,7 +31,7 @@
 <body>
 <div class="container main_div">
     <%
-        session = request.getSession()
+        session = request.getSession();
     ;%>
     <h1 class="text-center mb-3">User Account</h1>
     <p class="ml-5"><%= request.getAttribute("message") %></p>
@@ -55,6 +60,29 @@
             <a href="index.jsp"><button class="submit_btn" style="display:inline-block">Home Page</button></a>
     </form>
 
+    <div>
+        <h3 class="text-center mt-5"><u>Your Draws</u></h3>
+
+        <p>
+            <%
+            int i = 1;
+            if(request.getAttribute("draws") != null){
+                List<String> draws = (List<String>) request.getAttribute("draws");
+                %>
+                <% for (String draw: draws
+                ) { %>
+                <span style="font-weight: bold">Draw<%=i%>: <%=draw%></span><br>
+                    <%i++; %>
+                <%} %>
+            <%} %>
+
+        </p>
+        <form method="post" action="CheckUserNumbers">
+            <input type="submit" value="Check Against Lottery">
+        </form>
+
+    </div>
+
     <form action="AddUserNumbers" method="post" class="mt-5">
         <h1 class="text-center">User Numbers</h1>
         <div><ul id="error-message" class="text-danger"></ul></div>
@@ -62,25 +90,27 @@
             <input type="number" min="0" max="60" class="form-control"  id="number-one" name="numberone" placeholder="Number one" required>
         </div>
         <div class="form-group">
-            <input type="number" min="0" max="60" class="form-control"  id="number-two" name="numberone" placeholder="Number two" required>
+            <input type="number" min="0" max="60" class="form-control"  id="number-two" name="numbertwo" placeholder="Number two" required>
         </div>
         <div class="form-group">
-            <input type="number" min="0" max="60"  class="form-control"  id="number-three" name="numberone" placeholder="Number three" required>
+            <input type="number" min="0" max="60"  class="form-control"  id="number-three" name="numberthree" placeholder="Number three" required>
         </div>
         <div class="form-group">
-            <input type="number" min="0" max="60" class="form-control"  id="number-four" name="numberone" placeholder="Number four" required>
+            <input type="number" min="0" max="60" class="form-control"  id="number-four" name="numberfour" placeholder="Number four" required>
         </div>
         <div class="form-group">
-            <input type="number" min="0" max="60" class="form-control"  id="number-five" name="numberone" placeholder="Number five" required>
+            <input type="number" min="0" max="60" class="form-control"  id="number-five" name="numberfive" placeholder="Number five" required>
         </div>
         <div class="form-group">
-            <input type="number" min="0" max="60" class="form-control"  id="number-six" name="numberone" placeholder="Number six" required>
+            <input type="number" min="0" max="60" class="form-control"  id="number-six" name="numbersix" placeholder="Number six" required>
         </div>
+
         <button  id="random-btn" class="btn-large">Random Numbers</button>
-        <input type="submit" id="submit_btn" value="Submit" name="submit">
-        <h4 class="userInfo text-center mt-3"><a href="index.jsp">New user? Sign up !</a></h4>
+        <input type="submit" id="submit_btn" value="Submit">
 
     </form>
+
+
 
 </div>
 
@@ -121,6 +151,7 @@
             }
         }
         e.preventDefault();
+        activateSubmitButton();
     })
 
 </script>

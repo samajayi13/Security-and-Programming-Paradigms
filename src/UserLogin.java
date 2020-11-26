@@ -4,8 +4,11 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @WebServlet("/UserLogin")
@@ -35,29 +38,49 @@ public class UserLogin extends HttpServlet {
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
+
         try {
             // create database connection and statement
             Class.forName(JDBC_DRIVER);
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
-            stmt = conn.createStatement();
+            stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
 
             if(username != null && password != null ){
                 // Create sql query
                 String query = String.format("SELECT * FROM userAccounts WHERE username = '%s' AND Pwd = '%s' LIMIT 1",username,password);
+                String userRole = "";
                 // query database and get results
                 ResultSet rs = stmt.executeQuery(query);
+
                 int rowCount = 0;
                 while(rs.next()){
+                    userRole = rs.getString("UserRole").toLowerCase();
                     rowCount++;
                 }
                 if(rowCount == 0){
+                    int loginAttempts = (int) request.getSession().getAttribute("loginAttempts");
+                    loginAttempts += 1;
+                    request.getSession().setAttribute("loginAttempts",loginAttempts);
+
                     RequestDispatcher dispatcher = request.getRequestDispatcher("/error.jsp");
-                    request.setAttribute("message", "login unsuccessful");
+                    request.setAttribute("message", String.format("login unsuccessful you have %d attempts left",3-loginAttempts));
                     dispatcher.forward(request, response);
+
                 }else{
-                    RequestDispatcher dispatcher = request.getRequestDispatcher("/account.jsp");
-                    request.setAttribute("message", "login success");
-                    dispatcher.forward(request, response);
+                    removeSessionAttributes(request);
+                    addSessionAtrributes(rs,request.getSession());
+                    List<EncryptedData> encryptedDataList = new ArrayList<>();
+                    var session = request.getSession();
+                    session.setAttribute("encryptedDatas",encryptedDataList);
+                    System.out.println(userRole);
+                    if(userRole.equals("admin")){
+                        RequestDispatcher dispatcher = request.getRequestDispatcher("/Admin/admin_home.jsp");
+                        dispatcher.forward(request, response);
+                    }else if(userRole.equals("user")){
+                        RequestDispatcher dispatcher = request.getRequestDispatcher("/account.jsp");
+                        request.setAttribute("message", "login success");
+                        dispatcher.forward(request, response);
+                    }
                 }
 
             }else{
@@ -65,15 +88,14 @@ public class UserLogin extends HttpServlet {
                 ResultSet rs = stmt.executeQuery("SELECT * FROM userAccounts");
                 // create HTML table text
                 String content = "<table border='1' cellspacing='2' cellpadding='2' width='100%' align='left'>" +
-                        "<tr><th>First name</th><th>Last name</th><th>Email</th><th>Phone number</th><th>Username</th><th>Password</th></tr>";
+                        "<tr><th>First name</th><th>Last name</th><th>Email</th><th>Phone number</th><th>Username</th></tr>";
 
                 while (rs.next()) {
                     content += "<tr><td>"+ rs.getString("Firstname") + "</td>" +
                             "<td>" + rs.getString("Lastname") + "</td>" +
                             "<td>" + rs.getString("Email") + "</td>" +
                             "<td>" + rs.getString("Phone") + "</td>" +
-                            "<td>" + rs.getString("Username") + "</td>" +
-                            "<td>" + rs.getString("Pwd") + "</td></tr>";
+                            "<td>" + rs.getString("Username") + "</td>";
                 }
                 // finish HTML table text
                 content += "</table>";
@@ -109,6 +131,34 @@ public class UserLogin extends HttpServlet {
             } catch (SQLException se) {
                 se.printStackTrace();
             }
+        }
+    }
+
+    private void addSessionAtrributes(ResultSet rs,HttpSession session) {
+        try {
+            rs.first();
+            var rsMetadata =  rs.getMetaData();
+            for (int i = 1; i < 8 ; i++) {
+                var columnName = rsMetadata.getColumnName(i);
+                if (columnName.equals("Pwd") == true){
+                    session.setAttribute("password",rs.getString(columnName));
+                }else{
+                    session.setAttribute(columnName.toLowerCase(),rs.getString(columnName));
+                }
+
+
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void removeSessionAttributes(HttpServletRequest request) {
+        var session = request.getSession();
+        while(session.getAttributeNames().asIterator().hasNext()){
+            var attribute = session.getAttributeNames().nextElement();
+            session.removeAttribute(attribute);
         }
     }
 
