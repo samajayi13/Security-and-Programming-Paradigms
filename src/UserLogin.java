@@ -17,6 +17,13 @@ public class UserLogin extends HttpServlet {
     private Connection conn;
     private Statement stmt;
 
+    /**
+     *
+     * @param request
+     * @param response
+     * @throws ServletException
+     * @throws IOException
+     */
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
@@ -40,12 +47,23 @@ public class UserLogin extends HttpServlet {
 
 
         try {
+
+
             // create database connection and statement
             Class.forName(JDBC_DRIVER);
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
             stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
 
+            var session = request.getSession();
+
+
             if(username != null && password != null ){
+                if(session.getAttribute("loginAttempts") == null){
+                    session.setAttribute("loginAttempts",0);
+                    System.out.println("working");
+                }
+
+                removeSessionAttributes(request);
                 // Create sql query
                 String query = String.format("SELECT * FROM userAccounts WHERE username = '%s' AND Pwd = '%s' LIMIT 1",username,password);
                 String userRole = "";
@@ -67,16 +85,14 @@ public class UserLogin extends HttpServlet {
                     dispatcher.forward(request, response);
 
                 }else{
-                    removeSessionAttributes(request);
-                    addSessionAtrributes(rs,request.getSession());
-                    List<EncryptedData> encryptedDataList = new ArrayList<>();
-                    var session = request.getSession();
-                    session.setAttribute("encryptedDatas",encryptedDataList);
+                    addSessionAttributes(rs,request.getSession());
                     System.out.println(userRole);
+                    session.setAttribute("userrole",userRole);
                     if(userRole.equals("admin")){
                         RequestDispatcher dispatcher = request.getRequestDispatcher("/Admin/admin_home.jsp");
                         dispatcher.forward(request, response);
                     }else if(userRole.equals("user")){
+
                         RequestDispatcher dispatcher = request.getRequestDispatcher("/account.jsp");
                         request.setAttribute("message", "login success");
                         dispatcher.forward(request, response);
@@ -84,6 +100,7 @@ public class UserLogin extends HttpServlet {
                 }
 
             }else{
+
                 // query database and get results
                 ResultSet rs = stmt.executeQuery("SELECT * FROM userAccounts");
                 // create HTML table text
@@ -134,7 +151,7 @@ public class UserLogin extends HttpServlet {
         }
     }
 
-    private void addSessionAtrributes(ResultSet rs,HttpSession session) {
+    private void addSessionAttributes(ResultSet rs, HttpSession session) {
         try {
             rs.first();
             var rsMetadata =  rs.getMetaData();
@@ -143,11 +160,47 @@ public class UserLogin extends HttpServlet {
                 if (columnName.equals("Pwd") == true){
                     session.setAttribute("password",rs.getString(columnName));
                 }else{
+                    System.out.println(columnName.toLowerCase());
                     session.setAttribute(columnName.toLowerCase(),rs.getString(columnName));
+                    System.out.println(rs.getString(columnName));
                 }
 
 
             }
+
+            if(session.getAttribute("encryptionHelperMap") == null){
+                System.out.println(" encryptionHelperMap is null ");
+                EncryptionHelperMap encryptionHelperMap = new EncryptionHelperMap();
+                List<EncryptionHelper> encryptionHelpers  = new ArrayList<>();
+                encryptionHelperMap.createNewKeyPair((String) session.getAttribute("username"),encryptionHelpers);
+                session.setAttribute("encryptionHelperMap",encryptionHelperMap);
+                System.out.println("keys in encryptionHelperMap is ");
+                for (int i = 0; i < encryptionHelperMap.getEncryptionHashMap().keySet().size() ; i++) {
+                    System.out.println(encryptionHelperMap.getEncryptionHashMap().keySet().toArray()[i]);
+                }
+            }else if(session.getAttribute("encryptionHelperMap") != null){
+                System.out.println("encryptionHelperMap is not null");
+                EncryptionHelperMap encryptionHelperMap = (EncryptionHelperMap) session.getAttribute("encryptionHelperMap");
+                if(encryptionHelperMap.getEncryptionHashMap().get(session.getAttribute("username")) == null){
+                    List<EncryptionHelper> encryptionHelpers  = new ArrayList<>();
+                    encryptionHelperMap.createNewKeyPair((String) session.getAttribute("username"),encryptionHelpers);
+                    session.setAttribute("encryptionHelperMap",encryptionHelperMap);
+                    System.out.println("keys in encryptionHelperMap is ");
+                    for (int i = 0; i < encryptionHelperMap.getEncryptionHashMap().keySet().size() ; i++) {
+                        System.out.println(encryptionHelperMap.getEncryptionHashMap().keySet().toArray()[i]);
+                    }
+                }else{
+                    System.out.println("session username attribute is not null either ");
+                    System.out.println("keys in encryptionHelperMap is ");
+                    for (int i = 0; i < encryptionHelperMap.getEncryptionHashMap().keySet().size() ; i++) {
+                        System.out.println(encryptionHelperMap.getEncryptionHashMap().keySet().toArray()[i]);
+                    }
+                }
+            }
+
+
+            session.setAttribute("loginAttempts",0);
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -155,11 +208,16 @@ public class UserLogin extends HttpServlet {
     }
 
     private void removeSessionAttributes(HttpServletRequest request) {
-        var session = request.getSession();
-        while(session.getAttributeNames().asIterator().hasNext()){
-            var attribute = session.getAttributeNames().nextElement();
-            session.removeAttribute(attribute);
-        }
+//        var session = request.getSession();
+//        List<EncryptionHelper> encryptionHelperList = new ArrayList<>();
+//        encryptionHelperList = (List<EncryptionHelper>) session.getAttribute("encryptionHelperList");
+//        var loginAttempts = session.getAttribute("loginAttempts");
+//        while(session.getAttributeNames().asIterator().hasNext()){
+//            var attribute = session.getAttributeNames().nextElement();
+//            session.removeAttribute(attribute);
+//        }
+//        session.setAttribute("loginAttempts",loginAttempts);
+//        session.setAttribute("encryptionHelperList", encryptionHelperList);
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

@@ -21,11 +21,7 @@
 </head>
 <body>
 <%
-    session = request.getSession();
-    if(session.getAttribute("loginAttempts") == null){
-        session.setAttribute("loginAttempts",0);
-        System.out.println("working");
-    }
+
     ;%>
 <input id="session-login-attempts" type="hidden" value="<%= session.getAttribute("loginAttempts")%>">
 <div class="d-flex justify-content-center align-items-center container mt-3">
@@ -69,7 +65,7 @@
     var password = document.querySelector("#password");
     var username = document.querySelector("#username");
     document.addEventListener("input",function(e){
-        if(password.value.length > 0 && username.value.length > 0 && document.querySelector("#session-login-attempts").value < 3){
+        if(password.value.length > 0 && username.value.length > 0 ){
             activateSubmitButton();
         }else{
             disableSubmitButton();

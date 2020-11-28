@@ -1,4 +1,7 @@
-<%--
+<%@ page import="java.sql.DriverManager" %>
+<%@ page import="java.sql.Connection" %>
+<%@ page import="java.sql.Statement" %>
+<%@ page import="java.sql.ResultSet" %><%--
   Created by IntelliJ IDEA.
   User: samaj
   Date: 18/11/2020
@@ -12,6 +15,18 @@
     <link rel="stylesheet" href="../index.css">
 </head>
 <body>
+    <%
+
+        if(session.getAttribute("userrole") == null){
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/error.jsp");
+            request.setAttribute("message", "Incorrect Authorisation. You do not have the authorisation to access this page please login as a admin");
+            dispatcher.forward(request, response);
+        }else if(session.getAttribute("userrole").toString().toLowerCase().equals("admin") == false){
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/error.jsp");
+            request.setAttribute("message", "Incorrect Authorisation. You do not have the authorisation to access this page please login as a admin");
+            dispatcher.forward(request, response);
+        }
+    %>
     <div class="main_div">
         <h1 class="text-center mb-3">Admin Account</h1>
     </div>

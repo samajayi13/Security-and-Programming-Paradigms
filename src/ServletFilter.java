@@ -9,6 +9,14 @@ public class ServletFilter implements Filter {
     public void destroy() {
     }
 
+    /**
+     *
+     * @param req
+     * @param resp
+     * @param chain
+     * @throws ServletException
+     * @throws IOException
+     */
     public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws ServletException, IOException {
           boolean valid = true;
           Map parameters = req.getParameterMap();

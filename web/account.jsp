@@ -32,6 +32,16 @@
 <div class="container main_div">
     <%
         session = request.getSession();
+        if(session.getAttribute("userrole") == null){
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/error.jsp");
+            request.setAttribute("message", "Incorrect Authorisation. You do not have the authorisation to access this page please login as a user");
+            dispatcher.forward(request, response);
+        }else if(session.getAttribute("userrole").toString().toLowerCase().equals("user") == false){
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/error.jsp");
+            request.setAttribute("message", "Incorrect Authorisation. You do not have the authorisation to access this page please login as a user");
+            dispatcher.forward(request, response);
+        }
+
     ;%>
     <h1 class="text-center mb-3">User Account</h1>
     <p class="ml-5"><%= request.getAttribute("message") %></p>
@@ -55,14 +65,12 @@
             </tr>
         </tbody>
     </table>
-    <form action="UserLogin" method="post">
-        <input type="submit" value="Get All Data" class="submit_btn" style="display: inline-block">
-            <a href="index.jsp"><button class="submit_btn" style="display:inline-block">Home Page</button></a>
-    </form>
+    <a href="index.jsp"><button class="submit_btn" style="display:inline-block">Log out</button></a>
+
 
     <div>
         <h3 class="text-center mt-5"><u>Your Draws</u></h3>
-
+        <small>click on get draws button to get your latest draws</small>
         <p>
             <%
             int i = 1;
@@ -77,9 +85,15 @@
             <%} %>
 
         </p>
-        <form method="post" action="CheckUserNumbers">
-            <input type="submit" value="Check Against Lottery">
-        </form>
+        <div class="row">
+            <div class="col"><form method="post" action="GetUserNumbers">
+                <input style="margin-left: 30vw" type="submit" value="Get Your Draws">
+            </form></div>
+            <div class="col"><form method="post" action="CheckForWinningNumbers">
+                <input type="submit" value="Check Against Lottery">
+            </form></div>
+        </div>
+
 
     </div>
 

@@ -19,28 +19,21 @@ import java.util.Base64.Decoder;
 
 @WebServlet("/CreateAccount")
 public class CreateAccount extends HttpServlet {
+    // calls database helper class which reduces the redundant code.
+    private DatabaseConnection databaseConnection = new DatabaseConnection();
 
-    private Connection conn;
-    private PreparedStatement stmt;
-
+    /**
+     * gets value entered in input fields and creates a new user account
+     * redirects user to their homepage based on which role they hold
+     * @param request the HttpServletRequest being passed to the servlet.
+     * @param response the HttpServletResponse being passed to the servlet.
+     * @throws ServletException if error occurs during the forwarding of request and response objects.
+     * @throws IOException  if error occurs during the forwarding of request and response objects.
+     */
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-        // MySql database connection info
-        String JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
-        String USER = "user";
-        String PASS = "password";
-
-        // URLs to connect to database depending on your development approach
-        // (NOTE: please change to option 1 when submitting)
-
-        // 1. use this when running everything in Docker using docker-compose
-//        String DB_URL = "jdbc:mysql://db:3306/lottery";
-
-        // 2. use this when running tomcat server locally on your machine and mysql database server in Docker
-        String DB_URL = "jdbc:mysql://localhost:33333/lottery";
-
-        // 3. use this when running tomcat and mysql database servers on your machine
-        //String DB_URL = "jdbc:mysql://localhost:3306/lottery";
+        // database settings can be found in DatabaseConnection class.
+        // created DatabaseConnection class to help reduce redundant code.
+        // i was having to declare the same settings multiple times in different parts of the program.
 
         // get parameter data that was submitted in HTML form (use form attributes 'name')
         String firstname = request.getParameter("firstname");
@@ -49,21 +42,19 @@ public class CreateAccount extends HttpServlet {
         String phone = request.getParameter("phone");
         String username = request.getParameter("username");
         String password = request.getParameter("password");
-        String userRole = request.getParameter("userRole");
+        String userRole = request.getParameter("userrole");
+
 
         try{
-            // create database connection and statement
-            Class.forName(JDBC_DRIVER);
-            conn = DriverManager.getConnection(DB_URL,USER,PASS);
+            // creates a hashed value from the user's password
+            String hashedPassword = createHashedPassword(password);
 
-            String hashedPassword = processHash(password);
-
-            // Create sql query
+            // Creates SQL query to insert user data into userAccounts table
             String query = "INSERT INTO userAccounts (Firstname, Lastname, Email, Phone, Username, Pwd,UserRole)"
                     + " VALUES (?, ?, ?, ?, ?, ?,?)";
 
             // set values into SQL query statement
-            stmt = conn.prepareStatement(query);
+            var stmt = databaseConnection.getConn().prepareStatement(query);
             stmt.setString(1,firstname);
             stmt.setString(2,lastname);
             stmt.setString(3,email);
@@ -71,15 +62,15 @@ public class CreateAccount extends HttpServlet {
             stmt.setString(5,username);
             stmt.setString(6,hashedPassword);
             stmt.setString(7,userRole);
-
+            System.out.println(userRole);
             // execute query and close connection
             stmt.execute();
-            conn.close();
+            databaseConnection.getConn().close();
 
-            //this bellow gets the paramets from the request and assigns each to a session working
+            //gets parameter names from request and assigns each parameter value as a session attribute
+            //sets password session attribute as the hashed version of the value entered by the user
             HttpSession session  = request.getSession();
-            List<String> parameterNames = new ArrayList<String>(request.getParameterMap().keySet());
-
+            List<String> parameterNames = new ArrayList<>(request.getParameterMap().keySet());
             for (var name : parameterNames
             ) {
                 if(name.equalsIgnoreCase("password"))
@@ -88,13 +79,20 @@ public class CreateAccount extends HttpServlet {
                     session.setAttribute(name,request.getParameter(name));
             }
 
+             //Creates a list of encryption objects and stores it as a session attribute
+             //This will allow the program to be able to encrypt and decrypt multiple user numbers
+            if(session.getAttribute("encryptionHelperMap") == null){
+                EncryptionHelperMap encryptionHelperMap = new EncryptionHelperMap();
+                List<EncryptionHelper> encryptionHelpers  = new ArrayList<>();
+                encryptionHelperMap.createNewKeyPair((String) session.getAttribute("username"),encryptionHelpers);
+                session.setAttribute("encryptionHelperMap",encryptionHelperMap);
+            }
 
-            List<EncryptedData> encryptedDataList = new ArrayList<>();
-            session.setAttribute("encryptedDatas",encryptedDataList);
-            if(userRole.equals("Admin")){
+            //Redirects user to correct page based on user role
+            if(userRole.equals("Admin")) {
                 RequestDispatcher dispatcher = request.getRequestDispatcher("/Admin/admin_home.jsp");
                 dispatcher.forward(request, response);
-            }else if(userRole.equals("User")){
+            }else if(userRole.equals("User")) {
                 RequestDispatcher dispatcher = request.getRequestDispatcher("/account.jsp");
                 request.setAttribute("message", firstname+", you have successfully created an account");
                 dispatcher.forward(request, response);
@@ -109,13 +107,13 @@ public class CreateAccount extends HttpServlet {
         }
         finally{
             try{
-                if(stmt!=null)
-                    stmt.close();
+                if(databaseConnection.getConn()!=null)
+                    databaseConnection.getConn().close();
             }
             catch(SQLException se2){}
             try{
-                if(conn!=null)
-                    conn.close();
+                if(databaseConnection.getConn()!=null)
+                    databaseConnection.getConn().close();
             }catch(SQLException se){
                 se.printStackTrace();
             }
@@ -133,7 +131,6 @@ public class CreateAccount extends HttpServlet {
         String abcLowerCase = "abcdefghijklmnopqrstuvwxyz";
         String numbers = "01234567890123456789";
         String characters = "!@#$%^&*!@#$%%^^&*";
-
         String total = abcCapitals + abcLowerCase + numbers + characters;
 
         String response = "";
@@ -176,7 +173,7 @@ public class CreateAccount extends HttpServlet {
     }
 
 
-    public static String processHash(String userPassword) {
+    public static String createHashedPassword(String userPassword) {
         String salt = generateSalt(150);
         String salt2 = generateSalt(150);
         String salt3 = generateSalt(150);

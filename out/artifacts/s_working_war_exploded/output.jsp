@@ -22,13 +22,9 @@
 <body>
 <div class="container main_div">
         <h1>Database Contents</h1>
-
+        <% /*** Called from UserLogin servlet to display user information table (not including password) */%>
         <div>
             <%= request.getAttribute("data") %>
-        </div>
-
-        <div>
-            <a href="index.jsp"><button class="submit_btn mt-3">Home Page</button></a>
         </div>
 </div>
 
