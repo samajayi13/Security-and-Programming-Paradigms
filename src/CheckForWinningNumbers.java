@@ -24,17 +24,21 @@ public class CheckForWinningNumbers extends HttpServlet {
      */
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try{
+            System.out.println("IN CHECK FOR USER NUMBERS !!!");
             // gets latest lottery draw numbers from the database.
             String query = String.format("SELECT Numbers FROM RandomLotteryDraw ORDER BY ID DESC LIMIT 1;");
             ResultSet rs = databaseConnection.runQuery(query);
+            System.out.println("working 1");
 
             // points result set to the first row and gets lottery draw numbers.
-            rs.first();
+            rs.first();            System.out.println("working 2");
+
             String numbers = rs.getString("Numbers");
+            System.out.println("working 3");
 
             // gets the user draws (set of all of the 6 numbers the user has generated).
             List<String> draws = (List<String>) request.getSession().getAttribute("draws");
-
+            System.out.println("numbers :" + numbers);
             // checks any of the user numbers is the same as the lottery draw numbers.
             Boolean valid = false;
             for (int j = 0; j < draws.size(); j++) {

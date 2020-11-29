@@ -1,7 +1,10 @@
 
-
+#
 # INSERT INTO userAccounts VALUES
-# ('Sara','man','sara.fletcher@myemail.co.uk','44-0191-5678901','woman123','m01anjdsjd1nf9232vdsidikfo2sh11dshdshsdhdshsdhdshsdhdshdshhsdf','User');
+# ('Sara','man','sara.fletcher@myemail.co.uk','44-0191-5678901','woman123','290nf9232vdsidikfo2sh11dshdshsdhdshsdhdshsdhdshdshhsdf','User');
+#
+
+
 
 
 drop table RandomLotteryDraw;
@@ -13,7 +16,7 @@ CREATE TABLE RandomLotteryDraw
     primary key(id)
 );
 insert into RandomLotteryDraw(Numbers,TimeCreated)
-values("15,52,22,46,37,46",now());
+values("24,13,47,14,39,57",now());
 
 
 select * from userAccounts;
