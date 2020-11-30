@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.*;
 import java.util.*;
 import java.util.Base64.Encoder;
@@ -20,11 +21,11 @@ import java.util.Base64.Decoder;
 @WebServlet("/CreateAccount")
 public class CreateAccount extends HttpServlet {
     // calls database helper class which reduces the redundant code.
-    private DatabaseConnection databaseConnection = new DatabaseConnection();
+    private DatabaseConnection databaseConnection;
 
     /**
-     * gets value entered in input fields and creates a new user account
-     * redirects user to their homepage based on which role they hold
+     * gets values entered in input fields and creates a new user account
+     * redirects user to their homepage based on which authorisation role they hold
      * @param request the HttpServletRequest being passed to the servlet.
      * @param response the HttpServletResponse being passed to the servlet.
      * @throws ServletException if error occurs during the forwarding of request and response objects.
@@ -46,14 +47,15 @@ public class CreateAccount extends HttpServlet {
 
 
         try{
-            // creates a hashed value from the user's password
-            String hashedPassword = createHashedPassword(password);
+            databaseConnection = new DatabaseConnection();
+            // creates a hashed value from the user's password.
+            String hashedPassword = CreateAccount.generateNewHash(password);
 
             // Creates SQL query to insert user data into userAccounts table
             String query = "INSERT INTO userAccounts (Firstname, Lastname, Email, Phone, Username, Pwd,UserRole)"
                     + " VALUES (?, ?, ?, ?, ?, ?,?)";
 
-            // set values into SQL query statement
+            // set values into SQL query statement.
             var stmt = databaseConnection.getConn().prepareStatement(query);
             stmt.setString(1,firstname);
             stmt.setString(2,lastname);
@@ -62,7 +64,6 @@ public class CreateAccount extends HttpServlet {
             stmt.setString(5,username);
             stmt.setString(6,hashedPassword);
             stmt.setString(7,userRole);
-            System.out.println(userRole);
             // execute query and close connection
             stmt.execute();
             databaseConnection.getConn().close();
@@ -83,6 +84,11 @@ public class CreateAccount extends HttpServlet {
              //This will allow the program to be able to encrypt and decrypt multiple user numbers
             if(session.getAttribute("encryptionHelperMap") == null){
                 EncryptionHelperMap encryptionHelperMap = new EncryptionHelperMap();
+                List<EncryptionHelper> encryptionHelpers  = new ArrayList<>();
+                encryptionHelperMap.createNewKeyPair((String) session.getAttribute("username"),encryptionHelpers);
+                session.setAttribute("encryptionHelperMap",encryptionHelperMap);
+            }else{
+                EncryptionHelperMap encryptionHelperMap = (EncryptionHelperMap) session.getAttribute("encryptionHelperMap");
                 List<EncryptionHelper> encryptionHelpers  = new ArrayList<>();
                 encryptionHelperMap.createNewKeyPair((String) session.getAttribute("username"),encryptionHelpers);
                 session.setAttribute("encryptionHelperMap",encryptionHelperMap);
@@ -126,59 +132,55 @@ public class CreateAccount extends HttpServlet {
         doPost(request, response);
     }
 
-    private static String generateSalt(int lenght){
-        String abcCapitals = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        String abcLowerCase = "abcdefghijklmnopqrstuvwxyz";
-        String numbers = "01234567890123456789";
-        String characters = "!@#$%^&*!@#$%%^^&*";
-        String total = abcCapitals + abcLowerCase + numbers + characters;
-
-        String response = "";
-
-        char letters[] = new char[lenght];
-        for (int i=0; i<lenght-1; i++){
-            Random r = new Random();
-            char letter = total.charAt(r.nextInt(total.length()));
-            letters[i] = letter;
-        }
-
-        response = Arrays.toString(letters).replaceAll("\\s+","");
-        response = response.replaceAll(",","");
-
-        return response;
+    /**
+     * generate 16 bit salt and randomise it to make sure
+     * @return
+     */
+    private static  String generateSalt() {
+        SecureRandom random = new SecureRandom();
+        byte[] saltByte = new byte[16];
+        random.nextBytes(saltByte);
+        StringBuilder sbSalt = new StringBuilder(saltByte.length * 2);
+        for(byte b: saltByte)
+            sbSalt.append(String.format("%02x", b));
+        return sbSalt.toString();
     }
 
-    private static String getHash(String passwordToHash, String salt){
+    /**
+     * generate salt and hashes the user password and salt togehrt to make sure all hashes are unqiue
+     * @param input will be the users password value inputted in the form
+     * @return a new the hashed version of the password concateted with the salt
+     */
+    public static String generateNewHash(String input) {
+        String salt = generateSalt();
+        String saltedInput = salt + input;
+        String hashedPassword = generateHash(saltedInput);
+        return hashedPassword + salt;
+    }
+
+    /**
+     * generates hash using md5 algorithm to make sure it is secure
+     * @param input will be the salt concanted with the user's password
+     * @return a new hash value
+     */
+    public static String generateHash(String input) {
         String generatedPassword = null;
         try {
-            MessageDigest md = MessageDigest.getInstance("SHA-512");
-            md.update(salt.getBytes(StandardCharsets.UTF_8));
-            byte[] bytes = md.digest(passwordToHash.getBytes(StandardCharsets.UTF_8));
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(input.getBytes());
+            byte[] bytes = md.digest();
             StringBuilder sb = new StringBuilder();
-            for(int i=0; i< bytes.length ;i++){
-                sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+            for (byte aByte : bytes) {
+                sb.append(Integer.toString((aByte & 0xff) + 0x100, 16).substring(1));
             }
             generatedPassword = sb.toString();
         }
-        catch (NoSuchAlgorithmException e){
-            System.out.println(e);
+        catch (NoSuchAlgorithmException e )
+        {
+            e.printStackTrace();
         }
+
         return generatedPassword;
     }
 
-    public static String getSecureHash(String password, String salt){
-        String hash = getHash(password, salt);
-        hash = getHash(password, hash);
-        return hash;
-    }
-
-
-    public static String createHashedPassword(String userPassword) {
-        String salt = generateSalt(150);
-        String salt2 = generateSalt(150);
-        String salt3 = generateSalt(150);
-
-        String hash = getSecureHash(userPassword, salt + salt2 + salt3);
-        return hash;
-    }
 }

@@ -29,11 +29,8 @@ public class GetUserNumbers extends HttpServlet {
                                                       .getEncryptionHashMap()
                                                       .get(session.getAttribute("username"));
         if(encryptionHelperList.size() > 0 ){
-            System.out.println("workng e 3 ");
-
             // reads the byte array representation of the cipher text stored in the file
             var bytes = encryptionHelperList.get(0).bytesFileReader(filename);
-            System.out.println("workng e 4 ");
 
             // creates byte holder array to store bytes as they are being read for the file
             byte[] tempByte = new byte[256];
@@ -65,7 +62,6 @@ public class GetUserNumbers extends HttpServlet {
             }
 
             // adds plaintext version of the user draws as session attribute and calls account.jsp.
-            System.out.println("workng e 5 ");
             session.setAttribute("draws",userDraws);
             request.setAttribute("draws",userDraws);
         }

@@ -16,7 +16,8 @@ public class CheckForWinningNumbers extends HttpServlet {
 
     /**
      * get's the latest lottery draw numbers and checks user's numbers against them.
-     * If the user has a set of 6 numbers which is the same as the lottery draw numbers then we wins.
+     * If the user has a set of 6 numbers which is the same as the lottery draw numbers then he wins.
+     * all of the user's draws are deleted if the user wins the lottery.
      * @param request the HttpServletRequest being passed to the servlet.
      * @param response the HttpServletResponse being passed to the servlet.
      * @throws ServletException if error occurs during the forwarding of request and response objects.
@@ -24,57 +25,52 @@ public class CheckForWinningNumbers extends HttpServlet {
      */
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try{
-            System.out.println("IN CHECK FOR USER NUMBERS !!!");
             // gets latest lottery draw numbers from the database.
             String query = String.format("SELECT Numbers FROM RandomLotteryDraw ORDER BY ID DESC LIMIT 1;");
             ResultSet rs = databaseConnection.runQuery(query);
-            System.out.println("working 1");
 
             // points result set to the first row and gets lottery draw numbers.
-            rs.first();            System.out.println("working 2");
-
+            rs.first();
             String numbers = rs.getString("Numbers");
-            System.out.println("working 3");
 
-            // gets the user draws (set of all of the 6 numbers the user has generated).
+            // gets the user lottery draws and checks if any of the user numbers is the same as the lottery draw numbers.
             List<String> draws = (List<String>) request.getSession().getAttribute("draws");
-            System.out.println("numbers :" + numbers);
-            // checks any of the user numbers is the same as the lottery draw numbers.
-            Boolean valid = false;
+            Boolean matchedNumbers = false;
+
             for (int j = 0; j < draws.size(); j++) {
                 if(draws.get(j).equals(numbers) == true){
-                    valid = true;
+                    matchedNumbers = true;
                 }
             }
 
             // if the user has 6 numbers which matches with the lottery draw numbers a victory message will be displayed
             // otherwise the program will stay on account.jsp
-            if(valid == true){
+            if(matchedNumbers == true){
                 var session = request.getSession();
-                var filename = session .getAttribute("password").toString().substring(0,20);
+
+                // gets the application current directory and points to the user text file in "EncryptedFiles" folder
+                // deletes user previous draws as they have won the lottery
+                var filename = System.getProperty("user.dir")+ "\\EncryptedFiles"+session .getAttribute("password").toString().substring(0,20);
                 File file = new File(filename);
-                if(file.delete()){
-                    System.out.println("file deleted");
-                }
+                file.delete();
 
-
-
+                // removes all previous encryption objects and keys associated with the user by creating a new empty list of encryption objects.
+                // updates the session's hash maps key pair value for the user.
                 EncryptionHelperMap encryptionHelperMap = (EncryptionHelperMap) request.getSession().getAttribute("encryptionHelperMap");
                 List<EncryptionHelper> encryptionHelperList = new ArrayList<>();
                 encryptionHelperMap.updateKeyPair((String) session.getAttribute("username"),encryptionHelperList);
-
                 session.setAttribute("encryptionHelperMap",encryptionHelperMap);
+
+                // redirects user to output page informing them they have won the lottery.
                 RequestDispatcher dispatcher = request.getRequestDispatcher("/output.jsp");
                 request.setAttribute("data", "Lottery match with one of your numbers !! (" + numbers + ")   You win !!!!!!");
-                encryptionHelperMap = (EncryptionHelperMap) request.getSession().getAttribute("encryptionHelperMap");
-                System.out.println("Won users helper size is " + encryptionHelperMap.getEncryptionHashMap().get(session.getAttribute("username")).size());
-
                 dispatcher.forward(request, response);
             }else{
+                // if they have not won the lottery it refreshes the the page and informs the user.
                 RequestDispatcher dispatcher = request.getRequestDispatcher("/account.jsp");
+                request.setAttribute("message", "Unfortunately none of your numbers match with the lottery draw numbers");
                 dispatcher.forward(request, response);
             }
-
         }catch(SQLException e){}
     }
 

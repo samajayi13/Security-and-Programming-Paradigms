@@ -20,14 +20,19 @@
 
 </head>
 <body>
-<%
 
-    ;%>
 <input id="session-login-attempts" type="hidden" value="<%= session.getAttribute("loginAttempts")%>">
 <div class="d-flex justify-content-center align-items-center container mt-3">
-    <form action="UserLogin" method="post" class="main_div">
+    <form action="UserLogin" method="post" class="main_div" id="login-form">
         <h1 class="text-center">User Log In</h1>
         <div class="fields">
+            <%
+                String loginAttemptsErrorMessage = "";
+                if(request.getAttribute("data") != null){
+                    loginAttemptsErrorMessage = (String) request.getAttribute("data");
+                }
+            %>
+            <div class="text-danger"><%= loginAttemptsErrorMessage %></div>
             <div><ul id="error-message" class="text-danger"></ul></div>
             <div class="form-group">
                 <input type="text" class="form-control"  id="username" name="username" placeholder="Username" required>
@@ -41,9 +46,6 @@
             <h4 class="userInfo text-center mt-3"><a href="index.jsp">New user? Sign up !</a></h4>
 
         </div>
-
-
-
     </form>
 </div>
 
@@ -54,33 +56,44 @@
 <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+<!--IMPORTANT: Useful_function contains javascript functions that are frequnetly used crossed the applicaiton. This stop duplication of code -->
 <script src="Useful_functions.js"></script>
+
 <script type="application/javascript">
+    /**
+     * @desc the user's failed login attempt is more than 3 then the application prevents the user from being able to enter data into the login form
+     */
     if(document.querySelector("#session-login-attempts").value >= 3){
         addToErrorMessage("You have reached the 3 login attempts limit. Form has been disabled");
         document.getElementById("username").disabled=true;
         document.getElementById("password").disabled=true;
         document.querySelector("form").disabled=true;
     }
+
     var password = document.querySelector("#password");
     var username = document.querySelector("#username");
-    document.addEventListener("input",function(e){
+
+    /**
+     * @desc if the username and password fields are not empty
+     * also checks if username do not contain white space
+     * it activates the submit button if both conditions are met
+     * otherwise the application deactivates the submit button
+     */
+    document.addEventListener("input",function(){
+        validateWhiteSpaceInputs("login-form");
         if(password.value.length > 0 && username.value.length > 0 ){
             activateSubmitButton();
         }else{
             disableSubmitButton();
         }
-    })
-    disableSubmitButton();
-    function disableSubmitButton(){
-        $('#submit_btn').addClass('disabled');
-        $('#submit_btn').prop('disabled', true);
-    }
+    });
 
-    function activateSubmitButton(){
-        $('#submit_btn').removeClass('disabled');
-        $('#submit_btn').prop('disabled', false);
-    }
+    /**
+     * disables the submit button when document has loaded
+     */
+    disableSubmitButton();
+
 </script>
 </body>
 </html>

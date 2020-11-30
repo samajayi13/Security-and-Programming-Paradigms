@@ -3,13 +3,7 @@
 <%@ page import="java.sql.DriverManager" %>
 <%@ page import="java.sql.Connection" %>
 <%@ page import="java.sql.Statement" %>
-<%@ page import="java.sql.ResultSet" %><%--
-  Created by IntelliJ IDEA.
-  User: johnmace
-  Date: 21/10/2020
-  Time: 16:05
-  To change this template use File | Settings | File Templates.
---%>
+<%@ page import="java.sql.ResultSet" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <!doctype html>
 <html lang="en">
@@ -31,7 +25,9 @@
 <body>
 <div class="container main_div">
     <%
+        //checks if the user is logged to an account and has a authorisation role of a user
         session = request.getSession();
+
         if(session.getAttribute("userrole") == null){
             RequestDispatcher dispatcher = request.getRequestDispatcher("/error.jsp");
             request.setAttribute("message", "Incorrect Authorisation. You do not have the authorisation to access this page please login as a user");
@@ -85,16 +81,15 @@
             <%} %>
 
         </p>
+
         <div class="row">
             <div class="col"><form method="post" action="GetUserNumbers">
-                <input style="margin-left: 30vw" type="submit" value="Get Your Draws">
+                <input style="margin-left: 30vw" type="submit" value="Get Draws">
             </form></div>
             <div class="col"><form method="post" action="CheckForWinningNumbers">
                 <input type="submit" value="Check Against Lottery">
             </form></div>
         </div>
-
-
     </div>
 
     <form action="AddUserNumbers" method="post" class="mt-5">
@@ -121,11 +116,7 @@
 
         <button  id="random-btn" class="btn-large">Random Numbers</button>
         <input type="submit" id="submit_btn" value="Submit">
-
     </form>
-
-
-
 </div>
 
 <!-- Optional JavaScript -->
@@ -133,16 +124,27 @@
 <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+<!--IMPORTANT: Useful_function contains javascript functions that are frequnetly used crossed the applicaiton. This stop duplication of code -->
 <script src="Useful_functions.js"></script>
+
 <script>
     var  inputs = document.getElementsByTagName("input");
 
-    // to do : put disable submit button into a js file called useful functions
+    /**
+     * disables the submit button when document has loaded
+     */
     disableSubmitButton();
-    document.addEventListener("input",function(e){
 
+    /**
+     * @desc when the user inputs a value into the document it checks all input fields that is a lotter draw number
+     * checks if they are between 0 and 60 inclusive. If they are not an error message is displayed to the user
+     * if they are and there is no error message on the page the submit button is activated
+     */
+    document.addEventListener("input",function() {
         let valid = true ;
-        for(var i = 0; i <= inputs.length-1; i++){
+
+        for(let i = 0; i <= inputs.length-1; i++) {
             deleteErrorMessage(inputs[i].id.replace("-"," ")+" needs to be between the range of 0 and 60");
             console.log(inputs[i].value);
             if(inputs[i].value.toString().length <= 0 && inputs[i].id.includes("number") === true){
@@ -152,21 +154,38 @@
                 valid = false;
             }
         }
-        if(valid === true && errorMessage.children.length <=0)
-            activateSubmitButton();
-        else
-            disableSubmitButton();
-    })
 
+        if(valid === true && errorMessage.children.length <=0){
+            activateSubmitButton();
+        }
+        else{
+            disableSubmitButton();
+
+        }
+    });
+
+    /**
+     * @desc if the user decides to get a randomly secure draw it populates the lottery number input form with  6 numbers
+     * each number will be between 0 and 60 inclusive
+     * activates submit button and allows the user to submit the numbers
+     */
     document.querySelector("#random-btn").addEventListener("click",function(e){
+        const upperBound = 60;
+
+        // Creates an array and fills with cryptographically secure random numbers
+        let randomNumbers = new Uint8Array(100);
+        window.crypto.getRandomValues(randomNumbers);
+
+        // MOD 60 to make sure number is falls in the boundaries of 0 to 60 inclusive
         for(let i = 0; i <= inputs.length -1 ;i++){
             if(inputs[i].id.includes("number")){
-                inputs[i].value = Math.floor(Math.random() * 60 )+ 1;
+                inputs[i].value = (randomNumbers[i] % upperBound).toString();
             }
         }
+
         e.preventDefault();
         activateSubmitButton();
-    })
+    });
 
 </script>
 </body>

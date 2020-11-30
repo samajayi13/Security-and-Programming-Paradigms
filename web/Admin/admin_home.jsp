@@ -16,7 +16,7 @@
 </head>
 <body>
     <%
-
+        //checks if the user is logged to an account and has a authorisation role of a admin
         if(session.getAttribute("userrole") == null){
             RequestDispatcher dispatcher = request.getRequestDispatcher("/error.jsp");
             request.setAttribute("message", "Incorrect Authorisation. You do not have the authorisation to access this page please login as a admin");
@@ -30,10 +30,33 @@
     <div class="main_div">
         <h1 class="text-center mb-3">Admin Account</h1>
     </div>
-    <form action="UserLogin" method="post">
-        <input type="submit" value="Get User data" class="submit_btn" style="display: inline-block">
-        <a href="index.jsp"><button class="submit_btn" style="display:inline-block">Home Page</button></a>
-    </form>
 
+    <h1>User account details</h1>
+    <div>
+        <%= request.getAttribute("data") %>
+    </div>
+    <form action="CreateWinningLotteryDraw" method="post">
+            <h1 class="text-center">Create winning lottery draw numbers</h1>
+            <div><ul id="error-message" class="text-danger"></ul></div>
+            <div class="form-group">
+                <input type="number" min="0" max="60" class="form-control"  id="number-one" name="numberone" placeholder="Number one" required>
+            </div>
+            <div class="form-group">
+                <input type="number" min="0" max="60" class="form-control"  id="number-two" name="numbertwo" placeholder="Number two" required>
+            </div>
+            <div class="form-group">
+                <input type="number" min="0" max="60"  class="form-control"  id="number-three" name="numberthree" placeholder="Number three" required>
+            </div>
+            <div class="form-group">
+                <input type="number" min="0" max="60" class="form-control"  id="number-four" name="numberfour" placeholder="Number four" required>
+            </div>
+            <div class="form-group">
+                <input type="number" min="0" max="60" class="form-control"  id="number-five" name="numberfive" placeholder="Number five" required>
+            </div>
+            <div class="form-group">
+                <input type="number" min="0" max="60" class="form-control"  id="number-six" name="numbersix" placeholder="Number six" required>
+            </div>
+            <input type="submit"  value="Submit">
+    </form>
 </body>
 </html>

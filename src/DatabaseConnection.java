@@ -20,14 +20,13 @@ public class DatabaseConnection {
 
     private Connection conn;
 
-
-
     private Statement stmt ;
 
     public DatabaseConnection(){
         assignValues();
     }
 
+    // assigns values to private properties and sets up a new connection with the database
     public void assignValues(){
         try {
             Class.forName(JDBC_DRIVER);
@@ -42,7 +41,7 @@ public class DatabaseConnection {
         }
     }
 
-
+    //executes query passed into method
     public ResultSet runQuery(String query){
         try {
             assignValues();
@@ -53,28 +52,8 @@ public class DatabaseConnection {
         return null;
     }
 
-    public void setJDBC_DRIVER(String JDBC_DRIVER) {
-        this.JDBC_DRIVER = JDBC_DRIVER;
-    }
-
-    public void setUSER(String USER) {
-        this.USER = USER;
-    }
-
-    public void setPASS(String PASS) {
-        this.PASS = PASS;
-    }
-
-    public void setDB_URL(String DB_URL) {
-        this.DB_URL = DB_URL;
-    }
-
-    public void setConn(Connection conn) {
-        this.conn = conn;
-    }
-
-    public void setStmt(Statement stmt) {
-        this.stmt = stmt;
+    public Statement getStmt() {
+        return stmt;
     }
 
     public Connection getConn() {

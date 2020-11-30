@@ -2,11 +2,13 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.*;
 import java.util.Arrays;
@@ -26,7 +28,7 @@ public class EncryptionHelper {
     }
 
     /**
-     * takes the user's 6 numbers and turns it into cipher text
+     * takes the string of te user's 6 numbers and turns it into cipher text
      * @param data is the user's 6 numbers being encrypted
      * @return a 256 length byte array representation of the cipher text
      */
@@ -60,6 +62,7 @@ public class EncryptionHelper {
      */
     public byte[] bytesFileReader(String filename){
         try {
+            filename = System.getProperty("user.dir")+ "\\EncryptedFiles\\" + filename;
             return Files.readAllBytes(Paths.get(filename));
         } catch (IOException e) {
             e.printStackTrace();
@@ -74,8 +77,14 @@ public class EncryptionHelper {
      */
     public void bytesFileWriter(String filename, byte[] data){
         try {
+            if(new File(System.getProperty("user.dir")+ "\\EncryptedFiles").exists() == false){
+                new File(System.getProperty("user.dir")+ "\\EncryptedFiles").mkdir();
+            }
+            var path = System.getProperty("user.dir")+ "\\EncryptedFiles\\" + filename;
             // setting append to true allows program not to overwrite existing files
-            FileOutputStream os = new FileOutputStream(filename,true);
+            File file = new File(path);
+           file.createNewFile();
+            FileOutputStream os = new FileOutputStream(path,true);
             os.write(data);
         } catch (IOException e) {
             e.printStackTrace();

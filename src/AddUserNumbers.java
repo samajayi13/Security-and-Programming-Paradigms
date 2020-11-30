@@ -11,8 +11,8 @@ import java.util.List;
 @WebServlet({"/AddUserNumbers"})
 public class AddUserNumbers extends HttpServlet {
     /**
-     * when post request is sent, get all 6 of the user numbers
-     * adds number to a file. File name is made up of the first 20 characters of the users hashed password
+     * gets all 6 of the user numbers creates a single string from the numbers and encrypts the string before adding it to a text file.
+     * file name is made up of the first 20 characters of the users hashed password
      * @param request the HttpServletRequest being passed to the servlet
      * @param response the HttpServletResponse being passed to the servlet
      * @throws ServletException if error occurs during the forwarding of request and response objects
@@ -21,31 +21,32 @@ public class AddUserNumbers extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session  = request.getSession();
 
-        //gets all of the user's numbers entered and concatenates the numbers using a comma.
+        //gets all of the user's numbers entered and concatenates the numbers into a single string using a comma to separate each number
         List<String> parameterNames = new ArrayList<String>(request.getParameterMap().keySet());
         String userNumbers = "";
-        for(var i = 0; i <= parameterNames.size()-1; i++){
-            var name = parameterNames.get(i);
-            userNumbers += i == parameterNames.size()-1 ? request.getParameter(name) : request.getParameter(name) + ",";
+
+        for(var i = 0; i <= parameterNames.size()-1; i++) {
+            var parameterName = parameterNames.get(i);
+            // checks if the counter vairable is on the last element. if it is, adds a comma the end of the string
+            userNumbers += i == parameterNames.size()-1 ? request.getParameter(parameterName) : request.getParameter(parameterName) + ",";
         }
 
-        // encrypts the user numbers and stores it in a file named after the first 20 characters of the users hashed password.
-        EncryptionHelperMap  encryptionHelperMap = (EncryptionHelperMap) session.getAttribute("encryptionHelperMap");
+        // creates new encryption class which will contain the unique key for the encryption process
         EncryptionHelper encryptionHelper = new EncryptionHelper();
+        // encrypts the user numbers and stores it in a file named after the first 20 characters of the users hashed password.
         String filename = session.getAttribute("password").toString().substring(0,20);
         encryptionHelper.bytesFileWriter(filename, encryptionHelper.encryptData(userNumbers));
-        System.out.println("Encpytion helper class id is " + encryptionHelper.id);
-        System.out.println("workng e 1 ");
-        // stores encryption object in a list for when the program needs to get the correct key to decrypt set of 6 numbers
-
+        // encryptionHelperMap is a hash map which holds the list of encryption classes as the value and the username as the key
+        EncryptionHelperMap  encryptionHelperMap = (EncryptionHelperMap) session.getAttribute("encryptionHelperMap");
         List<EncryptionHelper> encryptionHelperList = encryptionHelperMap
                                                         .getEncryptionHashMap()
                                                         .get(session.getAttribute("username"));
+        // stores encryption object in a list for when the program needs to get the correct key to decrypt the user's numbers
         encryptionHelperList.add(encryptionHelper);
         encryptionHelperMap.updateKeyPair((String) session.getAttribute("username"),encryptionHelperList);
-        //stores list in a session so it can be accessible by other servlets.
+        //stores hash map back in a session so it can be accessible by other servlets.
         session.setAttribute("encryptionHelperMap", encryptionHelperMap);
-        //calls GetUserNumbers so the page can display the user's draws.
+        //calls GetUserNumbers so the application can display the user's draws.
         request.getRequestDispatcher("/GetUserNumbers").forward(request,response);
     }
 
